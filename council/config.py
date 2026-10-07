@@ -24,13 +24,14 @@ class Settings(BaseSettings):
     anthropic_api_key: str = ""
     google_api_key: str = ""
 
-    # Agent models (configurable; Role ≠ Model principle)
-    codex_model_normal: str = "gpt-4o"
-    codex_model_escalated: str = "o1"
-    claude_model_normal: str = "claude-sonnet-4-6"
-    claude_model_escalated: str = "claude-opus-4-5"
-    gemini_model_normal: str = "gemini-1.5-pro"
-    gemini_model_escalated: str = "gemini-1.5-ultra"
+    # Agent models — Role ≠ Model. The `agents` table is the source of truth;
+    # set any of these only to override it without a migration.
+    codex_model_normal: str | None = None
+    codex_model_escalated: str | None = None
+    claude_model_normal: str | None = None
+    claude_model_escalated: str | None = None
+    gemini_model_normal: str | None = None
+    gemini_model_escalated: str | None = None
 
     # Timezone — N4 LOCKED
     ceo_timezone: str = "Asia/Ho_Chi_Minh"

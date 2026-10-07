@@ -29,6 +29,7 @@ dependencies = [
 ai-council-webhook = "council.webhook.__main__:main"
 ai-council-worker = "council.worker.__main__:main"
 ai-council-migrate = "council.db.migrate:main"
+ai-council-register-webhook = "council.webhook.register:main"
 
 [tool.setuptools.packages.find]
 include = ["council*"]
