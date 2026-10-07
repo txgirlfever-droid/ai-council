@@ -6,6 +6,9 @@
 
 See `docs/ARCHITECTURE_v0.2.1.md` for the full spec.
 
+🇻🇳 Hướng dẫn dễ hiểu cho người không rành kỹ thuật, kèm sơ đồ:
+[`docs/HUONG_DAN.md`](docs/HUONG_DAN.md)
+
 ## Quick Start
 
 ```bash
