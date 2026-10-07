@@ -131,5 +131,14 @@ async def worker_loop() -> None:
             await asyncio.sleep(2)
 
 
+def load_handlers() -> None:
+    """Import the modules whose ``@register_handler`` decorators fill JOB_HANDLERS."""
+    import council.orchestrator.service  # noqa: F401
+
+
 async def run_worker() -> None:
-    await asyncio.gather(worker_loop(), heartbeat_loop())
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
+    load_handlers()
+    logger.info("Worker %s started; handlers: %s", WORKER_ID, ", ".join(sorted(JOB_HANDLERS)))
+    workers = [worker_loop() for _ in range(max(1, settings.worker_concurrency))]
+    await asyncio.gather(*workers, heartbeat_loop())

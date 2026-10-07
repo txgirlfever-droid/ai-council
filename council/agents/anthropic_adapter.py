@@ -33,7 +33,6 @@ class AnthropicAdapter(ProviderAdapter):
     def _estimate_from_usage(self, model: str, tokens_in: int, tokens_out: int) -> float:
         rates = {
             "claude-sonnet-4-6": (0.003, 0.015),
-            "claude-opus-4-5": (0.015, 0.075),
         }
         in_rate, out_rate = rates.get(model, (0.008, 0.024))
         return (tokens_in * in_rate + tokens_out * out_rate) / 1000

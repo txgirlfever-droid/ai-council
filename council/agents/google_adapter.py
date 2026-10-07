@@ -40,8 +40,8 @@ class GoogleAdapter(ProviderAdapter):
 
     def _estimate_from_usage(self, model: str, tokens_in: int, tokens_out: int) -> float:
         rates = {
-            "gemini-1.5-pro": (0.00125, 0.005),
-            "gemini-1.5-ultra": (0.005, 0.015),
+            # Unknown models fall back to the default rate below; add real
+            # prices here when you know them.
         }
         in_rate, out_rate = rates.get(model, (0.002, 0.006))
         return (tokens_in * in_rate + tokens_out * out_rate) / 1000

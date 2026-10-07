@@ -9,23 +9,42 @@ See `docs/ARCHITECTURE_v0.2.1.md` for the full spec.
 ## Quick Start
 
 ```bash
-# 1. Clone and install
+# 1. Install (Python 3.11+, PostgreSQL 14+)
 git clone <repo>
 cd ai-council
 pip install -e ".[dev]"
 
-# 2. Configure
+# 2. Configure: copy the example and fill in your tokens and keys
 cp .env.example .env
-# Edit .env with your tokens
 
-# 3. Run migrations
+# 3. Create the database tables
 python -m council.db.migrate
 
-# 4. Start worker + webhook
+# 4. Tell Telegram where your server is (needs WEBHOOK_URL and WEBHOOK_SECRET)
+python -m council.webhook.register
+
+# 5. Start the worker and the webhook (two terminals)
 python -m council.worker
-# in another terminal
 python -m council.webhook
 ```
+
+An agent only joins the council when its provider key (`OPENAI_API_KEY`,
+`ANTHROPIC_API_KEY`, `GOOGLE_API_KEY`) is set; at least two agents, one of them
+not Codex, are needed for a quorum.
+
+## Using the bot (CEO only)
+
+| Command | What happens |
+|---|---|
+| `/council <question>` | The council reviews, cross-reviews, debates (up to 3 cycles) and posts a synthesis with **Approve / Reject / Defer** buttons. |
+| `/council_critical <question>` | Same, but every agent must answer and Codex uses its escalated model. |
+| `/status` | Open discussions, queue size, timeouts and cost limits. |
+| `/help` | Command list. |
+
+Pressing a decision button records an immutable decision (`DEC-…`) exactly once;
+a second press is answered with the decision that already stands. If too few
+agents answer, the discussion is **paused** and the CEO is told why — no result
+is invented.
 
 ## Project Structure
 
@@ -37,11 +56,13 @@ council/
 │   └── seeds.sql           # Default agent configs
 ├── webhook/
 │   ├── handler.py          # Telegram webhook (async ACK)
+│   ├── register.py         # Registers the webhook URL + secret with Telegram
 │   └── service.py          # Deterministic idempotency keys/intake ledger
 ├── orchestrator/
 │   ├── engine.py           # Discussion/round/debate/synthesis state machine
+│   ├── prompts.py          # Role + round prompts with the JSON response contract
 │   ├── quorum.py           # Quorum logic (N1)
-│   └── ...                 # Pure orchestration boundaries
+│   └── service.py          # Worker job handlers: council runs + CEO decision gate
 ├── agents/
 │   ├── base.py             # ProviderAdapter ABC
 │   ├── openai_adapter.py   # OpenAI adapter
@@ -53,8 +74,9 @@ council/
 │   ├── worker.py           # Job queue consumer (SELECT FOR UPDATE SKIP LOCKED)
 │   └── lease.py            # Lease transition rules
 ├── telegram/
-│   ├── sender.py           # Idempotent message posting
-│   └── buttons.py          # Inline keyboard builder
+│   ├── sender.py           # Telegram client boundary (swappable in tests)
+│   ├── format.py           # CEO-facing message text
+│   └── buttons.py          # Approve/Reject/Defer keyboard (64-byte callback data)
 ├── schemas/
 │   ├── council_response.py # Structured JSON response schema (Correction #10)
 ├── costs/
@@ -66,6 +88,7 @@ tests/
 ├── test_quorum.py          # Quorum logic tests
 ├── test_flow.py            # Full integration flow (mock providers)
 ├── test_mvp_integration.py # Webhook→rounds→CEO + timeout/race/lease
+├── test_postgres_e2e.py    # Same flow on a real PostgreSQL (opt-in)
 └── conftest.py             # Test fixtures
 ```
 
@@ -82,6 +105,9 @@ Redis, Kubernetes, Prometheus, partitioning, and distributed caching are explici
 ```bash
 python -m pytest -q
 python -m ruff check .
+
+# Full flow on a real, disposable PostgreSQL database (its public schema is reset):
+TEST_DATABASE_URL=postgresql://council:secret@localhost:5432/ai_council_test python -m pytest -q
 ```
 
 Provider calls are mocked by default. External API tests require explicit credentials and opt-in.

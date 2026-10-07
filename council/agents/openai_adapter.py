@@ -18,7 +18,9 @@ class OpenAIAdapter(ProviderAdapter):
         response = await self._client.chat.completions.create(
             model=model,
             messages=[{"role": "user", "content": prompt}],
-            max_tokens=max_tokens,
+            # max_completion_tokens works for every current chat model; reasoning
+            # models reject the older max_tokens parameter.
+            max_completion_tokens=max_tokens,
         )
         raw = response.choices[0].message.content or ""
         usage = response.usage
@@ -35,8 +37,8 @@ class OpenAIAdapter(ProviderAdapter):
     def _estimate_from_usage(self, model: str, tokens_in: int, tokens_out: int) -> float:
         # Approximate pricing (update as needed — not stored in code as permanent law)
         rates = {
-            "gpt-4o": (0.005, 0.015),
-            "o1": (0.015, 0.060),
+            "gpt-5.6-terra": (0.002, 0.012),
+            "gpt-5.6-sol": (0.004, 0.020),
         }
         in_rate, out_rate = rates.get(model, (0.01, 0.03))
         return (tokens_in * in_rate + tokens_out * out_rate) / 1000

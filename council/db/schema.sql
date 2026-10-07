@@ -349,9 +349,18 @@ CREATE INDEX IF NOT EXISTS idx_decisions_supersedes ON decisions(supersedes_id)
     WHERE supersedes_id IS NOT NULL;
 
 -- Late FK: council_packets → decisions
-ALTER TABLE council_packets
-    ADD CONSTRAINT IF NOT EXISTS fk_packet_decision
-    FOREIGN KEY (protected_by_decision_id) REFERENCES decisions(id);
+-- PostgreSQL has no "ADD CONSTRAINT IF NOT EXISTS", so guard it with a DO block.
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'fk_packet_decision'
+    ) THEN
+        ALTER TABLE council_packets
+            ADD CONSTRAINT fk_packet_decision
+            FOREIGN KEY (protected_by_decision_id) REFERENCES decisions(id);
+    END IF;
+END;
+$$;
 
 -- =============================================================================
 -- RISKS
