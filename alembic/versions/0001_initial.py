@@ -11,8 +11,9 @@ depends_on = None
 
 
 def upgrade() -> None:
-    schema_path = Path(__file__).parents[2] / "council" / "db" / "schema.sql"
-    op.execute(schema_path.read_text(encoding="utf-8"))
+    db_dir = Path(__file__).parents[2] / "council" / "db"
+    op.execute((db_dir / "schema.sql").read_text(encoding="utf-8"))
+    op.execute((db_dir / "seeds.sql").read_text(encoding="utf-8"))
 
 
 def downgrade() -> None:
